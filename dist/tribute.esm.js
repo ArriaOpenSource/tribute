@@ -84,15 +84,15 @@ class TributeEvents {
     element.boundKeyup = this.keyup.bind(element, this);
     element.boundInput = this.input.bind(element, this);
 
-    element.addEventListener("keydown", element.boundKeydown, false);
-    element.addEventListener("keyup", element.boundKeyup, false);
-    element.addEventListener("input", element.boundInput, false);
+    element.addEventListener("keydown", element.boundKeydown, true);
+    element.addEventListener("keyup", element.boundKeyup, true);
+    element.addEventListener("input", element.boundInput, true);
   }
 
   unbind(element) {
-    element.removeEventListener("keydown", element.boundKeydown, false);
-    element.removeEventListener("keyup", element.boundKeyup, false);
-    element.removeEventListener("input", element.boundInput, false);
+    element.removeEventListener("keydown", element.boundKeydown, true);
+    element.removeEventListener("keyup", element.boundKeyup, true);
+    element.removeEventListener("input", element.boundInput, true);
 
     delete element.boundKeydown;
     delete element.boundKeyup;
@@ -1163,7 +1163,7 @@ class TributeSearch {
         let len = string.length,
             pre = opts.pre || '',
             post = opts.post || '',
-            compareString = opts.caseSensitive && string || string.toLowerCase();
+            compareString = opts.caseSensitive && string || string.toLowerCase();
 
         if (opts.skip) {
             return {rendered: string, score: 0}
@@ -1299,7 +1299,7 @@ class Tribute {
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
-    itemClass = "",
+    itemClass = null,
     trigger = "@",
     autocompleteMode = false,
     autocompleteSeparator = null,
@@ -1353,7 +1353,7 @@ class Tribute {
           containerClass: containerClass,
 
           // class applied to each item
-          itemClass: itemClass,
+          itemClass: (itemClass || Tribute.defaultItemClass).bind(this),
 
           // function called on select that retuns the content to insert
           selectTemplate: (
@@ -1415,7 +1415,7 @@ class Tribute {
           iframe: item.iframe || iframe,
           selectClass: item.selectClass || selectClass,
           containerClass: item.containerClass || containerClass,
-          itemClass: item.itemClass || itemClass,
+          itemClass: (item.itemClass || Tribute.defaultItemClass).bind(this),
           selectTemplate: (
             item.selectTemplate || Tribute.defaultSelectTemplate
           ).bind(this),
@@ -1491,6 +1491,10 @@ class Tribute {
     );
   }
 
+  static defaultItemClass(_item) {
+    return '';
+  }
+
   static defaultMenuItemTemplate(matchItem) {
     return matchItem.string;
   }
@@ -1542,10 +1546,8 @@ class Tribute {
 
   ensureEditable(element) {
     if (Tribute.inputTypes().indexOf(element.nodeName) === -1) {
-      if (element.contentEditable) {
-        element.contentEditable = true;
-      } else {
-        throw new Error("[Tribute] Cannot bind to " + element.nodeName);
+      if (!element.contentEditable) {
+        throw new Error("[Tribute] Cannot bind to " + element.nodeName + ", not contentEditable");
       }
     }
   }
@@ -1615,7 +1617,14 @@ class Tribute {
         items = items.slice(0, this.current.collection.menuItemLimit);
       }
 
-      this.current.filteredItems = items;
+      // Order by functions firstly then variables
+      this.current.filteredItems = items.sort((a, b) =>
+          a.original.type > b.original.type
+              ? 1
+              : b.original.type > a.original.type
+              ? -1
+              : 0
+      );
 
       let ul = this.menu.querySelector("ul");
 
@@ -1647,7 +1656,7 @@ class Tribute {
       items.forEach((item, index) => {
         let li = this.range.getDocument().createElement("li");
         li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass;
+        li.className = this.current.collection.itemClass(item);
         li.addEventListener("mousemove", e => {
           let [li, index] = this._findLiTarget(e.target);
           if (e.movementY !== 0) {

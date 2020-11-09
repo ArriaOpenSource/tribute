@@ -66,7 +66,7 @@
     if (typeof o === "string") return _arrayLikeToArray(o, minLen);
     var n = Object.prototype.toString.call(o).slice(8, -1);
     if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Map" || n === "Set") return Array.from(o);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
   }
 
@@ -142,16 +142,16 @@
         element.boundKeydown = this.keydown.bind(element, this);
         element.boundKeyup = this.keyup.bind(element, this);
         element.boundInput = this.input.bind(element, this);
-        element.addEventListener("keydown", element.boundKeydown, false);
-        element.addEventListener("keyup", element.boundKeyup, false);
-        element.addEventListener("input", element.boundInput, false);
+        element.addEventListener("keydown", element.boundKeydown, true);
+        element.addEventListener("keyup", element.boundKeyup, true);
+        element.addEventListener("input", element.boundInput, true);
       }
     }, {
       key: "unbind",
       value: function unbind(element) {
-        element.removeEventListener("keydown", element.boundKeydown, false);
-        element.removeEventListener("keyup", element.boundKeyup, false);
-        element.removeEventListener("input", element.boundInput, false);
+        element.removeEventListener("keydown", element.boundKeydown, true);
+        element.removeEventListener("keyup", element.boundKeyup, true);
+        element.removeEventListener("input", element.boundInput, true);
         delete element.boundKeydown;
         delete element.boundKeyup;
         delete element.boundInput;
@@ -1354,7 +1354,7 @@
           _ref$containerClass = _ref.containerClass,
           containerClass = _ref$containerClass === void 0 ? "tribute-container" : _ref$containerClass,
           _ref$itemClass = _ref.itemClass,
-          itemClass = _ref$itemClass === void 0 ? "" : _ref$itemClass,
+          itemClass = _ref$itemClass === void 0 ? null : _ref$itemClass,
           _ref$trigger = _ref.trigger,
           trigger = _ref$trigger === void 0 ? "@" : _ref$trigger,
           _ref$autocompleteMode = _ref.autocompleteMode,
@@ -1423,7 +1423,7 @@
           // class applied to the Container
           containerClass: containerClass,
           // class applied to each item
-          itemClass: itemClass,
+          itemClass: (itemClass || Tribute.defaultItemClass).bind(this),
           // function called on select that retuns the content to insert
           selectTemplate: (selectTemplate || Tribute.defaultSelectTemplate).bind(this),
           // function called that returns content for an item
@@ -1464,7 +1464,7 @@
             iframe: item.iframe || iframe,
             selectClass: item.selectClass || selectClass,
             containerClass: item.containerClass || containerClass,
-            itemClass: item.itemClass || itemClass,
+            itemClass: (item.itemClass || Tribute.defaultItemClass).bind(_this),
             selectTemplate: (item.selectTemplate || Tribute.defaultSelectTemplate).bind(_this),
             menuItemTemplate: (item.menuItemTemplate || Tribute.defaultMenuItemTemplate).bind(_this),
             // function called when menu is empty, disables hiding of menu.
@@ -1547,10 +1547,8 @@
       key: "ensureEditable",
       value: function ensureEditable(element) {
         if (Tribute.inputTypes().indexOf(element.nodeName) === -1) {
-          if (element.contentEditable) {
-            element.contentEditable = true;
-          } else {
-            throw new Error("[Tribute] Cannot bind to " + element.nodeName);
+          if (!element.contentEditable) {
+            throw new Error("[Tribute] Cannot bind to " + element.nodeName + ", not contentEditable");
           }
         }
       }
@@ -1616,9 +1614,12 @@
 
           if (_this2.current.collection.menuItemLimit) {
             items = items.slice(0, _this2.current.collection.menuItemLimit);
-          }
+          } // Order by functions firstly then variables
 
-          _this2.current.filteredItems = items;
+
+          _this2.current.filteredItems = items.sort(function (a, b) {
+            return a.original.type > b.original.type ? 1 : b.original.type > a.original.type ? -1 : 0;
+          });
 
           var ul = _this2.menu.querySelector("ul");
 
@@ -1648,7 +1649,7 @@
             var li = _this2.range.getDocument().createElement("li");
 
             li.setAttribute("data-index", index);
-            li.className = _this2.current.collection.itemClass;
+            li.className = _this2.current.collection.itemClass(item);
             li.addEventListener("mousemove", function (e) {
               var _this2$_findLiTarget = _this2._findLiTarget(e.target),
                   _this2$_findLiTarget2 = _slicedToArray(_this2$_findLiTarget, 2),
@@ -1872,6 +1873,11 @@
         }
 
         return this.current.collection.trigger + item.original[this.current.collection.fillAttr];
+      }
+    }, {
+      key: "defaultItemClass",
+      value: function defaultItemClass(_item) {
+        return '';
       }
     }, {
       key: "defaultMenuItemTemplate",
