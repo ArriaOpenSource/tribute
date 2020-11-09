@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>ZURB Tribute | Froala Demo</title>
+        <link rel="stylesheet" href="css/foundation.min.css" />
+        <link rel="stylesheet" href="tribute.css" />
+
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css"
+            rel="stylesheet"
+            type="text/css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.css"
+        />
+
+        <!-- Include Editor style. -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/froala-editor@2.3.4/css/froala_editor.pkgd.min.css"
+            rel="stylesheet"
+            type="text/css"
+        />
+        <link
+            href="https://cdn.jsdelivr.net/npm/froala-editor@2.3.4/css/froala_style.min.css"
+            rel="stylesheet"
+            type="text/css"
+        />
+
+        <style>
+            .row {
+                max-width: 90rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="row text-center">
+            <div class="large-12 columns">
+                <h1>Tribute Froala Demo</h1>
+            </div>
+        </div>
+
+        <div class="row" id="content">
+            <div class="large-8 medium-8 small-centered columns">
+                <h5>Tribute on the Froala Editor v2.3.4</h5>
+                <form>
+                    <div class="row">
+                        <div class="large-12 columns">
+                            <textarea
+                                id="testarea"
+                                placeholder="Enter some text here"
+                            ></textarea>
+                        </div>
+                    </div>
+                </form>
+
+                <hr />
+
+                <p>
+                    Brought to you by <a href="https://zurb.com/">ZURB</a>, the
+                    creators of <a href="https://helio.app/">Helio</a>
+                </p>
+
+                <p>
+                    Design successful products by rapidly revealing key user
+                    behaviors.
+                    <a href="https://helio.app/">Helio</a> makes it easy to get
+                    reactions on your designs quickly so your team can focus on
+                    solving the right problems, right now.
+                </p>
+
+                <p>
+                    The code is available under the
+                    <a
+                        href="https://github.com/zurb/tribute/blob/master/LICENSE"
+                        >MIT License</a
+                    >.
+                </p>
+            </div>
+        </div>
+
+        <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/codemirror.min.js"
+        ></script>
+        <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.25.0/mode/xml/xml.min.js"
+        ></script>
+
+        <!-- Include Editor JS files. -->
+        <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/froala-editor@2.3.4/js/froala_editor.pkgd.min.js"
+        ></script>
+        <script src="tribute.js"></script>
+
+        <script>
+            $(function () {
+                var tribute = new Tribute({
+                    trigger: '[[',
+                    values: [
+                        {
+                            key: 'abbreviateNumber',
+                            desc:
+                                "Defines the way a number should be abbreviated when it is displayed, but doesn't change its actual value. The display precision of abbreviated numbers can be set in the Number and Currency section of the project settings.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'abs',
+                            desc:
+                                'Returns the absolute value (without the sign) of a number.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'absDiff',
+                            desc:
+                                'Finds the absolute difference between two numbers: |x - y|.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'addToDateTime',
+                            desc: 'Adds a duration to a DateTime.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asBoolean',
+                            desc: 'Converts the input value to a Boolean.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asDateTime',
+                            desc:
+                                "Converts the input value to a DateTime. Returns null if input value can't be converted.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'asDays',
+                            desc: 'Converts a duration from seconds to days.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asHours',
+                            desc: 'Converts a duration from seconds to hours.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asList',
+                            desc: 'Converts the input value to a List.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asMilliseconds',
+                            desc:
+                                'Converts a duration from seconds to milliseconds.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asMinutes',
+                            desc:
+                                'Converts a duration from seconds to minutes.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asMonths',
+                            desc: 'Converts a duration from seconds to months.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asNumber',
+                            desc: 'Converts the input value to a Number.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asString',
+                            desc: 'Converts the input value to a String.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asWeeks',
+                            desc: 'Converts a duration from seconds to weeks.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'asYears',
+                            desc: 'Converts a duration from seconds to years.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'charAt',
+                            desc:
+                                'Returns the character value at the specified index. An index ranges from 0 to length - 1. The first character value of the sequence is at index 0, the next at index 1, and so on.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'chooseAtRandom',
+                            desc:
+                                'Takes a list of strings and selects one at random.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'concat',
+                            desc:
+                                'Joins the specified lists or objects into one list.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'contains',
+                            desc:
+                                'Tests if a string or a list contains a specified substring, item or items in a sub-list.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'count',
+                            desc:
+                                'Returns a count of how many times a specified item appears in a list or table.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'countable',
+                            desc:
+                                "Generates a phrase which expresses the quantity of something, e.g. '6 cold beers'.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'countryAdjective',
+                            desc:
+                                "Returns the adjective for a given country name e.g for 'Holland' it returns 'Dutch'.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'countryDeterminer',
+                            desc:
+                                "Returns the country name with the determiner if necessary i.e. 'The United States' or 'France'.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'currencyFormat',
+                            desc:
+                                'Takes a number value, a currency, a currency format string and a locale and ensures that the currency value is printed according to the specified format.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'dateTimeDifference',
+                            desc:
+                                'Calculates the chronological difference between two DateTime strings in seconds.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'day',
+                            desc:
+                                'Returns the day part of a DateTime as a number e.g. 25. Returns null if the DateTime contains no date.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'decodeHtml',
+                            desc: 'Decodes an HTML string.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'diff',
+                            desc:
+                                'Calculates the difference between 2 numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'div',
+                            desc: 'Performs division.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'durationAsList',
+                            desc:
+                                'Expresses a duration in the given time units, returning this as a list of unit values - years,months,weeks,days,hours,minutes,seconds.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'encodeHtml',
+                            desc: 'Encodes an HTML string.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'endsWith',
+                            desc:
+                                'Tests if this string ends with the specified suffix.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'formatDateTime',
+                            desc:
+                                'Formats a DateTime to the specified pattern.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'formatDuration',
+                            desc:
+                                'Expresses a duration in terms of the specified time units.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'frequency',
+                            desc:
+                                'Returns a list of counts indicating how many items from the input list fall into a series of specified ranges.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'gender',
+                            desc:
+                                'Outputs the gender (male, female) for a given name e.g. Lily or Nick',
+                            type: 'function',
+                        },
+                        {
+                            key: 'getCurrentTime',
+                            desc:
+                                'Returns a DateTime object representing the current date and time, either in UTC (default) or in the given time zone if specified.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'getTimeZone',
+                            desc:
+                                'Returns the time zone ID for a DateTime that has a time zone set or the offset if an offset is set. Returns null if neither are set.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'hasKey',
+                            desc: 'The object to test.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'hour',
+                            desc:
+                                'Returns the hours part of a DateTime as a number e.g. 9. Returns null if the DateTime contains no time.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'indexOf',
+                            desc:
+                                'Returns the index within this string or list or table of the first occurrence of the specified substring or sub-list or item searching in the direction of the specified offset and returns -1 if not found.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'inflectNoun',
+                            desc: 'Inflect a noun, e.g. tree/trees.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'inflectVerb',
+                            desc:
+                                'Inflect a verb, e.g. take / takes / has taken / took.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'initCap',
+                            desc:
+                                'Capitalises the first letter of a given sentence or word.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'isDateTime',
+                            desc:
+                                'Validates a string to see if it can be parsed to a date, time or DateTime. Returns true if it can be parsed successfully, otherwise false.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'isNumber',
+                            desc:
+                                'Tests an input value to determine if it is a number, either an actual number or a string representing a number.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'joinStrings',
+                            desc: 'Concatenates the specified strings.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'keys',
+                            desc:
+                                'Creates a list of keys in the passed object.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'len',
+                            desc:
+                                'Finds the length of a variable. The variable can either be a String, where len(string) is equal to the number of characters in the string, or a List, where len(list) is equal to the number of items in the list.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'list',
+                            desc:
+                                'Creates a punctuated sentence from a list of words e.g. cats, dogs and fish.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'lower',
+                            desc: 'Converts all letters to lowercase.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'mean',
+                            desc:
+                                'Returns the mean of the given set of numbers i.e. the average of a set of numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'median',
+                            desc:
+                                'Returns the median of the given set of numbers i.e. the middle number in the set after sorting. If there is an even number of values, it returns the average of the two middle values.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'minute',
+                            desc:
+                                'Returns the minutes part of a DateTime as a number e.g. 30. Returns null if the DateTime contains no time.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'mode',
+                            desc:
+                                'Returns a list of the most common occurring item(s) from a list of items. Returns null and a warning if there are no duplicates in the list.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'month',
+                            desc:
+                                'Returns the month part of a DateTime as a number, e.g. 11 for November. Returns null if the DateTime contains no date.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'monthAsNumber',
+                            desc:
+                                "Returns the month number (1 to 12) for a given month name e.g. 'January' or 'Jan'.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'numberAsMonth',
+                            desc:
+                                "Returns the full month name for a given month number (1 to 12) e.g. 'January' or 'janvier' for 1.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'numberAsWeekday',
+                            desc:
+                                "Returns the full weekday name for a given weekday number (1 to 7) e.g. 'Monday' or 'Lundi' for 1.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'numberFormat',
+                            desc:
+                                'Ensures that a number is printed according to the specified arguments.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'numToWords',
+                            desc:
+                                'Outputs a number in words, e.g. 4 as four or 5.5 as five point five. Optionally, it may be shown as an ordinal, e.g. fourth.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'parseDateTime',
+                            desc:
+                                'Create a DateTime object from a string. The resulting DateTime object will represent a date, a time or a DateTime, depending on which information was present in the DateTime string.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'parseDuration',
+                            desc:
+                                'Takes a string representing a duration and returns a number representing the number of seconds in the given duration.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'percentage',
+                            desc:
+                                'Finds the percentage of the portion from the whole value in a variable: (portionValue / wholeValue) * 100.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'percentageChange',
+                            desc:
+                                'Finds the percentage change in a variable: (newValue - oldValue) / oldValue * 100.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'percentile',
+                            desc:
+                                'For a list of numeric values and a target percentile, returns the value estimated to represent that percentile.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'power',
+                            desc: 'Finds the yth power of an argument x.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'precision',
+                            desc:
+                                "Defines the precision with which a number should be displayed, but doesn't change its actual value.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'product',
+                            desc:
+                                'Calculates the product of 2 or more numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'pronoun',
+                            desc:
+                                'Outputs the pronoun for a given gender, or name e.g. you, his, her, their',
+                            type: 'function',
+                        },
+                        {
+                            key: 'rank',
+                            desc:
+                                'Returns the rank of a value in a list of values. The input list is sorted for ranking. The value to be ranked should be an entry in the list of numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'root',
+                            desc: 'Finds root of yth degree of an argument x.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'round',
+                            desc:
+                                'Rounds the value of a number to a specified number of places and sets its display precision to the same number.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'second',
+                            desc:
+                                'Returns the seconds part of a DateTime as a number e.g. 45.456. Returns null if the DateTime contains no time.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'setTimeZone',
+                            desc:
+                                'Returns a DateTime object with the time zone set to the specified time zone or offset.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sign',
+                            desc:
+                                'Determines the sign of a number, 1 if positive, -1 if negative, 0 if zero.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sortDateTimes',
+                            desc:
+                                'Sorts a list-like object of DateTimes in temporal order.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sortDateTimesReverse',
+                            desc:
+                                'Sorts a list-like object of DateTimes in reverse temporal order.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sortMonthNames',
+                            desc:
+                                "Takes a list of month names or recognised abbreviations (Java 'MMM' format), and returns a new list sorted in order of month. For example 'January' or 'Jan'. Uses the language defined by locale.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'split',
+                            desc:
+                                'Splits the string around matches of the given regular expression.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'standardDeviation',
+                            desc:
+                                'Returns the standard deviation calculated from the input set of numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'startsWith',
+                            desc:
+                                'Tests if this string starts with the specified prefix.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sublist',
+                            desc:
+                                'Returns a sublist of the input list, based on the startIndex and endIndex values e.g. sublist(myList, 4, 6) returns a sublist of 2 items starting with the 5th item in myList.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'substitute',
+                            desc:
+                                'Substitute new text for old text in a string (all or a specific occurrence).',
+                            type: 'function',
+                        },
+                        {
+                            key: 'substring',
+                            desc:
+                                'Returns a string that is a substring of this string, starting from the beginning index and extending to end index - 1.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'subtractFromDateTime',
+                            desc: 'Subtracts a duration from a DateTime.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'sum',
+                            desc: 'Calculates the sum of 2 or more numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'titleCase',
+                            desc: 'Capitalises each word in a given string.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'toReachThreshold',
+                            desc:
+                                'Takes a list of numbers and a target threshold, and returns the number of items required to match or exceed the target threshold, by starting with zero and adding each value in turn, working left to right.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'translateTimeZone',
+                            desc:
+                                'Returns a DateTime object translated to the specified time zone or offset.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'trim',
+                            desc:
+                                'Trims leading and trailing whitespace from a string.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'truncate',
+                            desc:
+                                'Truncates a number to its whole (integer) part e.g. 15.6 will be truncated to 15.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'unique',
+                            desc:
+                                'Remove duplicates from a list, column or row.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'upper',
+                            desc: 'Converts all letters to uppercase.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'value',
+                            desc:
+                                'Extracts the value from a table cell or from a list with a single element.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'values',
+                            desc:
+                                'Creates a list of values in the passed object.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'variance',
+                            desc:
+                                'Returns the variance calculated from the input set of numbers.',
+                            type: 'function',
+                        },
+                        {
+                            key: 'weekdayAsNumber',
+                            desc:
+                                "Returns the weekday number (1 to 7) for a given weekday name e.g. 'Sunday' or 'Domenica'.",
+                            type: 'function',
+                        },
+                        {
+                            key: 'year',
+                            desc:
+                                'Returns the year part of a DateTime. Returns null if the DateTime contains no date.',
+                            type: 'function',
+                        },
+                        { key: 'Capital', desc: 'COLUMN', type: 'variable' },
+                        {
+                            key: 'CapitalPop2010',
+                            desc: 'COLUMN',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'CapitalPop2016',
+                            desc: 'COLUMN',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'LargestState',
+                            desc: 'SCRIPT',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'LeastPopulousState',
+                            desc: 'SCRIPT',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'MostPopulousState',
+                            desc: 'SCRIPT',
+                            type: 'variable',
+                        },
+                        { key: 'Party', desc: 'COLUMN', type: 'variable' },
+                        { key: 'Premier', desc: 'COLUMN', type: 'variable' },
+                        { key: 'RowNames', desc: 'LIST', type: 'variable' },
+                        {
+                            key: 'SmallestState',
+                            desc: 'SCRIPT',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'StateLandArea',
+                            desc: 'COLUMN',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'StatePop2010',
+                            desc: 'COLUMN',
+                            type: 'variable',
+                        },
+                        {
+                            key: 'StatePop2016',
+                            desc: 'COLUMN',
+                            type: 'variable',
+                        },
+                        { key: 'Terms', desc: 'COLUMN', type: 'variable' },
+                        { key: 'WholeTable', desc: 'TABLE', type: 'variable' },
+                        { key: 'README', desc: 'SCRIPT', type: 'variable' },
+                    ],
+                    menuShowMinLength: 0,
+                    selectTemplate: function (item) {
+                        return `[[${item.original.key}${
+                            item.original.type === 'function' ? '(' : ''
+                        }`;
+                    },
+                    menuItemTemplate: function (item) {
+                        return `<strong>${item.original.key}</strong> <small>(${item.original.type}) - ${item.original.desc}</small>`;
+                    },
+                    itemClass: (item) => item.original.type,
+                    replaceTextSuffix: '',
+                });
+
+                $('textarea').on('froalaEditor.initialized', function (
+                    e,
+                    editor
+                ) {
+                    tribute.attach(editor.$el);
+
+                    editor.events.on(
+                        'keydown',
+                        function (e) {
+                            if (
+                                e.which == $.FroalaEditor.KEYCODE.ENTER &&
+                                tribute.isActive
+                            ) {
+                                return false;
+                            }
+                        },
+                        true
+                    );
+                });
+
+                $('textarea').froalaEditor();
+            });
+        </script>
+    </body>
+</html>
