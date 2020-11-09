@@ -11,7 +11,7 @@ class Tribute {
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
-    itemClass = "",
+    itemClass = null,
     trigger = "@",
     autocompleteMode = false,
     autocompleteSeparator = null,
@@ -65,7 +65,7 @@ class Tribute {
           containerClass: containerClass,
 
           // class applied to each item
-          itemClass: itemClass,
+          itemClass: (itemClass || Tribute.defaultItemClass).bind(this),
 
           // function called on select that retuns the content to insert
           selectTemplate: (
@@ -127,7 +127,7 @@ class Tribute {
           iframe: item.iframe || iframe,
           selectClass: item.selectClass || selectClass,
           containerClass: item.containerClass || containerClass,
-          itemClass: item.itemClass || itemClass,
+          itemClass: (item.itemClass || Tribute.defaultItemClass).bind(this),
           selectTemplate: (
             item.selectTemplate || Tribute.defaultSelectTemplate
           ).bind(this),
@@ -201,6 +201,10 @@ class Tribute {
       this.current.collection.trigger +
       item.original[this.current.collection.fillAttr]
     );
+  }
+
+  static defaultItemClass(_item) {
+    return '';
   }
 
   static defaultMenuItemTemplate(matchItem) {
@@ -325,7 +329,14 @@ class Tribute {
         items = items.slice(0, this.current.collection.menuItemLimit);
       }
 
-      this.current.filteredItems = items;
+      // Order by functions firstly then variables
+      this.current.filteredItems = items.sort((a, b) =>
+          a.original.type > b.original.type
+              ? 1
+              : b.original.type > a.original.type
+              ? -1
+              : 0
+      );
 
       let ul = this.menu.querySelector("ul");
 
@@ -357,7 +368,7 @@ class Tribute {
       items.forEach((item, index) => {
         let li = this.range.getDocument().createElement("li");
         li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass;
+        li.className = this.current.collection.itemClass(item);
         li.addEventListener("mousemove", e => {
           let [li, index] = this._findLiTarget(e.target);
           if (e.movementY !== 0) {
