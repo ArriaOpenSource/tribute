@@ -508,7 +508,14 @@ class TributeRange {
                 return
             }
 
-            if (!this.isContentEditable(context.element)) {
+            const atlNonMatchingBracket = 'atl-non-matching-bracket';
+            if ($(`.${atlNonMatchingBracket}`).length > 0) {
+                let {top, left} = $(`.${atlNonMatchingBracket}`).offset();
+                top = Math.ceil(top) + 17;
+                left = Math.ceil(left) - 5;
+                coordinates = {top, left};
+            }
+            else if (!this.isContentEditable(context.element)) {
                 coordinates = this.getTextAreaOrInputUnderlinePosition(this.tribute.current.element,
                     info.mentionPosition);
             }
@@ -777,6 +784,16 @@ class TributeRange {
 
         let effectiveRange = this.getTextPrecedingCurrentSelection();
         let lastWordOfEffectiveRange = this.getLastWordInText(effectiveRange);
+
+        if (
+            $(ctx.element)
+                .html()
+                .includes(' [<span class="atl-non-matching-bracket">[</span>')
+        ) {
+            // ATL bracket HTML interferes with matching the trigger
+            effectiveRange = this.tribute.collection[0].trigger;
+            lastWordOfEffectiveRange = this.tribute.collection[0].trigger;
+        }
 
         if (isAutocomplete) {
             return {
@@ -1774,7 +1791,41 @@ class Tribute {
     if (typeof index !== "number" || isNaN(index)) return;
     let item = this.current.filteredItems[index];
     let content = this.current.collection.selectTemplate(item);
-    if (content !== null) this.replaceText(content, originalEvent, item);
+    if (content !== null) {
+      if (
+        $(this.current.element)
+            .html()
+            .includes(
+                ' [<span class="atl-non-matching-bracket">[</span>'
+            )
+    ) {
+        let sel, range;
+        if (window.getSelection) {
+          sel = window.getSelection();
+          if (sel.getRangeAt && sel.rangeCount) {
+            range = sel.getRangeAt(0);
+            range.deleteContents();
+            const node = document.createTextNode(
+                content.substr(2, content.length)
+            );
+            range.insertNode(node);
+            
+            // Preserve the selection
+            if (node) {
+                range = range.cloneRange();
+                range.setStartAfter(node);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+          }
+      }
+
+        return;
+      }
+
+      this.replaceText(content, originalEvent, item);
+    }
   }
 
   replaceText(content, originalEvent, item) {

@@ -583,7 +583,20 @@
             return;
           }
 
-          if (!this.isContentEditable(context.element)) {
+          var atlNonMatchingBracket = 'atl-non-matching-bracket';
+
+          if ($(".".concat(atlNonMatchingBracket)).length > 0) {
+            var _$$offset = $(".".concat(atlNonMatchingBracket)).offset(),
+                top = _$$offset.top,
+                left = _$$offset.left;
+
+            top = Math.ceil(top) + 17;
+            left = Math.ceil(left) - 5;
+            coordinates = {
+              top: top,
+              left: left
+            };
+          } else if (!this.isContentEditable(context.element)) {
             coordinates = this.getTextAreaOrInputUnderlinePosition(this.tribute.current.element, info.mentionPosition);
           } else {
             coordinates = this.getContentEditableCaretPosition(info.mentionPosition);
@@ -864,6 +877,12 @@
 
         var effectiveRange = this.getTextPrecedingCurrentSelection();
         var lastWordOfEffectiveRange = this.getLastWordInText(effectiveRange);
+
+        if ($(ctx.element).html().includes(' [<span class="atl-non-matching-bracket">[</span>')) {
+          // ATL bracket HTML interferes with matching the trigger
+          effectiveRange = this.tribute.collection[0].trigger;
+          lastWordOfEffectiveRange = this.tribute.collection[0].trigger;
+        }
 
         if (isAutocomplete) {
           return {
@@ -1772,7 +1791,35 @@
         if (typeof index !== "number" || isNaN(index)) return;
         var item = this.current.filteredItems[index];
         var content = this.current.collection.selectTemplate(item);
-        if (content !== null) this.replaceText(content, originalEvent, item);
+
+        if (content !== null) {
+          if ($(this.current.element).html().includes(' [<span class="atl-non-matching-bracket">[</span>')) {
+            var sel, range;
+
+            if (window.getSelection) {
+              sel = window.getSelection();
+
+              if (sel.getRangeAt && sel.rangeCount) {
+                range = sel.getRangeAt(0);
+                range.deleteContents();
+                var node = document.createTextNode(content.substr(2, content.length));
+                range.insertNode(node); // Preserve the selection
+
+                if (node) {
+                  range = range.cloneRange();
+                  range.setStartAfter(node);
+                  range.collapse(true);
+                  sel.removeAllRanges();
+                  sel.addRange(range);
+                }
+              }
+            }
+
+            return;
+          }
+
+          this.replaceText(content, originalEvent, item);
+        }
       }
     }, {
       key: "replaceText",

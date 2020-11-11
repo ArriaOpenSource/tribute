@@ -104,6 +104,696 @@
 
         <script>
             $(function () {
+                $.FE.PLUGINS.bracket_matcher = class BracketMatcher {
+                    constructor(editor) {
+                        this.editor = editor;
+                        // NOTE: the order of opening brackets and their respective closing brackets must
+                        // be the same in both arrays.
+                        this.openingBrackets = ['[', '(', '{'];
+                        this.closingBrackets = [']', ')', '}'];
+                        // CSS class names added to highlighted bracket spans
+                        this.matchingClass = 'atl-matching-bracket';
+                        this.nonMatchingClass = 'atl-non-matching-bracket';
+                    }
+
+                    highlightBrackets() {
+                        let selection = this.editor.selection.get();
+                        if (
+                            !selection.isCollapsed ||
+                            !selection.anchorNode ||
+                            !this.editor.selection.inEditor()
+                        ) {
+                            // Can't match when a range of chars is selected,
+                            // or if cursor was not placed in the editor yet (happens after initial load),
+                            // or if selection is not inside the editor.
+                            return;
+                        }
+                        this.editor.selection.save();
+
+                        let textNode;
+                        let offset;
+                        let bracketChar;
+
+                        // First try matching the char before the cursor. This mimics code-view behaviour.
+                        let charBefore = this.getCharAfterOrBeforeCursor(
+                            selection,
+                            false
+                        );
+                        if (this.openingBrackets.includes(charBefore.value)) {
+                            textNode = charBefore.textNode;
+                            offset = charBefore.offset;
+                            bracketChar = this.closingBrackets[
+                                this.openingBrackets.indexOf(charBefore.value)
+                            ];
+                        } else if (
+                            this.closingBrackets.includes(charBefore.value)
+                        ) {
+                            textNode = charBefore.textNode;
+                            offset = charBefore.offset;
+                            bracketChar = this.openingBrackets[
+                                this.closingBrackets.indexOf(charBefore.value)
+                            ];
+                        } else {
+                            // Try matching the char after the cursor.
+                            let charAfter = this.getCharAfterOrBeforeCursor(
+                                selection,
+                                true
+                            );
+                            if (
+                                this.openingBrackets.includes(charAfter.value)
+                            ) {
+                                textNode = charAfter.textNode;
+                                offset = charAfter.offset;
+                                bracketChar = this.closingBrackets[
+                                    this.openingBrackets.indexOf(
+                                        charAfter.value
+                                    )
+                                ];
+                            } else if (
+                                this.closingBrackets.includes(charAfter.value)
+                            ) {
+                                textNode = charAfter.textNode;
+                                offset = charAfter.offset;
+                                bracketChar = this.openingBrackets[
+                                    this.closingBrackets.indexOf(
+                                        charAfter.value
+                                    )
+                                ];
+                            }
+                        }
+
+                        // Highlight new brackets or remove any previous highlighting
+                        if (
+                            textNode &&
+                            Number.isInteger(offset) &&
+                            bracketChar
+                        ) {
+                            this.findMatchAndHighlight(
+                                textNode,
+                                offset,
+                                bracketChar
+                            );
+                        } else {
+                            this.removeCurrentHighlighting();
+                        }
+
+                        this.editor.selection.restore();
+                    }
+
+                    isHighlightedMatchingBracket(node) {
+                        if (!node) return false;
+                        let nodeElem = this.getNodeElement(node);
+                        return nodeElem.classList.contains(this.matchingClass);
+                    }
+
+                    isHighlightedNonMatchingBracket(node) {
+                        if (!node) return false;
+                        let nodeElem = this.getNodeElement(node);
+                        return nodeElem.classList.contains(
+                            this.nonMatchingClass
+                        );
+                    }
+
+                    getNodeElement(node) {
+                        return node.nodeType == Node.ELEMENT_NODE
+                            ? node
+                            : node.parentElement;
+                    }
+
+                    getCharAfterOrBeforeCursor(selection, after = false) {
+                        let offset, value, textNode;
+
+                        // Functions for traversing backwards or forwards
+                        let getInitialOffset = after
+                            ? () => 0
+                            : (textNode) =>
+                                  textNode
+                                      ? textNode.textContent.length - 1
+                                      : 0;
+                        let getNewOffset = after
+                            ? (offset) => offset + 1
+                            : (offset) => offset - 1;
+
+                        // Ensure we are dealing with a text node and try getting the char value at cursor position.
+                        if (
+                            selection.anchorNode &&
+                            selection.anchorNode.nodeType !== Node.TEXT_NODE
+                        ) {
+                            let currentNode = selection.anchorNode.childNodes.item(
+                                selection.anchorOffset
+                            );
+                            textNode = this.getNextOrPreviousTextNode(
+                                currentNode,
+                                true,
+                                after
+                            );
+                            offset = getInitialOffset(textNode);
+                            value = textNode
+                                ? textNode.textContent.charAt(offset)
+                                : '';
+                        } else {
+                            textNode = this.getFirstOrLastTextNode(
+                                selection.anchorNode,
+                                true
+                            );
+                            offset = after
+                                ? selection.anchorOffset
+                                : selection.anchorOffset - 1;
+                            value =
+                                (textNode &&
+                                    textNode.textContent.charAt(offset)) ||
+                                '';
+                        }
+
+                        // If no more chars are available in the current text node, e.g. when at the end of it,
+                        // jump to next/previous text node.
+                        if (!value && textNode) {
+                            let newTextNode = this.getNextOrPreviousTextNode(
+                                textNode,
+                                true,
+                                after
+                            );
+                            if (newTextNode) {
+                                textNode = newTextNode;
+                                offset = getInitialOffset(textNode);
+                                value =
+                                    textNode.textContent.charAt(offset) || '';
+                            }
+                        }
+
+                        // Ignore zero-width spaces inserted by froala
+                        // (these can appear temporarily when froala saves cursor position).
+                        while (/\u200B/g.test(value)) {
+                            offset = getNewOffset(offset);
+                            value = textNode.textContent.charAt(offset);
+                            if (!value) {
+                                let newTextNode = this.getNextOrPreviousTextNode(
+                                    textNode,
+                                    true,
+                                    after
+                                );
+                                if (newTextNode) {
+                                    textNode = newTextNode;
+                                    offset = getInitialOffset(textNode);
+                                    value =
+                                        textNode.textContent.charAt(offset) ||
+                                        '';
+                                }
+                            }
+                        }
+
+                        return { offset, value, textNode };
+                    }
+
+                    findMatchAndHighlight(
+                        textNode,
+                        bracketOffset,
+                        bracketToFind
+                    ) {
+                        let bracket;
+                        // Find (non-)matching bracket(s)
+                        let searchForward = this.isClosingBracket(
+                            bracketToFind
+                        );
+                        if (searchForward) {
+                            bracket = this.findBracketForward(
+                                textNode,
+                                bracketOffset
+                            );
+                        } else {
+                            bracket = this.findBracketBackward(
+                                textNode,
+                                bracketOffset
+                            );
+                        }
+
+                        // Check if already highlighted
+                        if (
+                            !this.needsHighlighting(
+                                textNode,
+                                bracket.matchTextNode,
+                                bracket.foundBracket,
+                                bracketToFind
+                            )
+                        ) {
+                            return;
+                        }
+
+                        this.highlighNewMatches(
+                            bracket.foundBracket,
+                            bracketToFind,
+                            textNode,
+                            bracketOffset,
+                            bracket.matchTextNode,
+                            bracket.matchOffset,
+                            searchForward
+                        );
+                    }
+
+                    isOpeningBracket(char) {
+                        return this.openingBrackets.includes(char);
+                    }
+
+                    isClosingBracket(char) {
+                        return this.closingBrackets.includes(char);
+                    }
+
+                    findBracketForward(textNode, bracketOffset) {
+                        let currentTextNode = textNode;
+                        let searchStartOffset = bracketOffset + 1;
+                        let sameDirectionBracketCount = 1;
+                        let foundBracket, matchOffset, matchTextNode;
+
+                        while (!foundBracket && currentTextNode) {
+                            // Search current text node
+                            let str = currentTextNode.textContent;
+                            for (
+                                let i = searchStartOffset;
+                                i < str.length;
+                                i++
+                            ) {
+                                let char = str.charAt(i);
+
+                                if (this.isOpeningBracket(char)) {
+                                    sameDirectionBracketCount++;
+                                } else if (this.isClosingBracket(char)) {
+                                    sameDirectionBracketCount--;
+                                    if (sameDirectionBracketCount === 0) {
+                                        foundBracket = char;
+                                        matchOffset = i;
+                                        matchTextNode = currentTextNode;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Move to next sibling text node.
+                            currentTextNode = this.getNextOrPreviousTextNode(
+                                currentTextNode,
+                                false,
+                                true
+                            );
+                            searchStartOffset = 0;
+                        }
+
+                        return { foundBracket, matchOffset, matchTextNode };
+                    }
+
+                    findBracketBackward(textNode, bracketOffset) {
+                        let currentTextNode = textNode;
+                        let searchStartOffset = bracketOffset - 1;
+                        let sameDirectionBracketCount = 1;
+                        let foundBracket, matchOffset, matchTextNode;
+
+                        while (!foundBracket && currentTextNode) {
+                            // Search current text node
+                            let str = currentTextNode.textContent;
+                            for (let i = searchStartOffset; i >= 0; i--) {
+                                let char = str.charAt(i);
+                                if (this.isClosingBracket(char)) {
+                                    sameDirectionBracketCount++;
+                                } else if (this.isOpeningBracket(char)) {
+                                    sameDirectionBracketCount--;
+                                    if (sameDirectionBracketCount === 0) {
+                                        foundBracket = char;
+                                        matchOffset = i;
+                                        matchTextNode = currentTextNode;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Move to previous sibling text node.
+                            currentTextNode = this.getNextOrPreviousTextNode(
+                                currentTextNode,
+                                false,
+                                false
+                            );
+                            searchStartOffset = currentTextNode
+                                ? currentTextNode.textContent.length - 1
+                                : -1;
+                        }
+
+                        return { foundBracket, matchOffset, matchTextNode };
+                    }
+
+                    highlighNewMatches(
+                        foundBracket,
+                        bracketToFind,
+                        textNode,
+                        bracketOffset,
+                        matchTextNode,
+                        matchOffset,
+                        forward
+                    ) {
+                        // Store currently highlighted elements and remove after highlighting new ones. This is to
+                        // ensure original offsets are retained.
+                        let currentHighlightedElems = this.getHighlightedElems(
+                            this.editor.$el
+                        );
+
+                        // Highlight brackets as matching or non-matching.
+                        let className =
+                            foundBracket === bracketToFind
+                                ? this.matchingClass
+                                : this.nonMatchingClass;
+                        // We must wrap brackets starting with last one in text to retain original offsets.
+                        if (forward) {
+                            // When searching forward, wrap the found bracket first.
+                            if (foundBracket) {
+                                this.wrapTextInSpan(
+                                    matchTextNode,
+                                    matchOffset,
+                                    matchOffset + 1,
+                                    className
+                                );
+                            }
+                            this.wrapTextInSpan(
+                                textNode,
+                                bracketOffset,
+                                bracketOffset + 1,
+                                className
+                            );
+                        } else {
+                            // When searching backward, wrap the starting bracket first.
+                            this.wrapTextInSpan(
+                                textNode,
+                                bracketOffset,
+                                bracketOffset + 1,
+                                className
+                            );
+                            if (foundBracket) {
+                                this.wrapTextInSpan(
+                                    matchTextNode,
+                                    matchOffset,
+                                    matchOffset + 1,
+                                    className
+                                );
+                            }
+                        }
+
+                        // Remove old highlighting
+                        this.replaceWithContents(currentHighlightedElems);
+                    }
+
+                    needsHighlighting(
+                        textNode,
+                        matchTextNode,
+                        foundBracket,
+                        bracketToFind
+                    ) {
+                        let bracketsMatch = foundBracket === bracketToFind;
+                        if (bracketsMatch) {
+                            if (
+                                foundBracket &&
+                                this.isHighlightedMatchingBracket(textNode) &&
+                                this.isHighlightedMatchingBracket(matchTextNode)
+                            ) {
+                                // Both brackets already highlighted.
+                                return false;
+                            }
+                        } else {
+                            // Check mismatched brackets
+                            if (
+                                !foundBracket &&
+                                this.isHighlightedNonMatchingBracket(textNode)
+                            ) {
+                                // Second bracket not found and initial one already highlighted.
+                                return false;
+                            }
+
+                            if (
+                                foundBracket &&
+                                this.isHighlightedNonMatchingBracket(
+                                    textNode
+                                ) &&
+                                this.isHighlightedNonMatchingBracket(
+                                    matchTextNode
+                                )
+                            ) {
+                                // Both brackets already highlighted.
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    wrapTextInSpan(
+                        textNode,
+                        startOffset,
+                        endOffset,
+                        className
+                    ) {
+                        // Split the text node
+                        const newNode = textNode.splitText(startOffset);
+                        const nodeAfterNew = newNode.splitText(
+                            endOffset - startOffset
+                        );
+
+                        // Wrap the new node in a span
+                        const span = document.createElement('span');
+                        span.className = className;
+                        span.appendChild(newNode);
+
+                        // Insert the span back
+                        nodeAfterNew.parentElement.insertBefore(
+                            span,
+                            nodeAfterNew
+                        );
+                        return span;
+                    }
+
+                    removeCurrentHighlighting() {
+                        let highlightedElems = this.getHighlightedElems(
+                            this.editor.$el
+                        );
+                        if (!highlightedElems.length) {
+                            return;
+                        }
+
+                        this.editor.selection.save();
+                        this.replaceWithContents(highlightedElems);
+                        this.editor.selection.restore();
+                    }
+
+                    replaceWithContents(elems) {
+                        const parentNodes = elems.map(
+                            (_i, el) => el.parentNode
+                        );
+                        elems.replaceWith(function () {
+                            return this.innerHTML;
+                        });
+                        parentNodes.each(
+                            (_i, node) => node && node.normalize()
+                        );
+                    }
+
+                    getHighlightedElems(rootNode) {
+                        return rootNode.find(
+                            `.${this.matchingClass}, .${this.nonMatchingClass}`
+                        );
+                    }
+
+                    isFroalaMarker(node) {
+                        let classList = node.classList;
+                        let parent = node.parentElement;
+                        let parentClassList = parent && parent.classList;
+
+                        // Check for both, the current node and its parent,
+                        // as the current node could be a text node inside the marker.
+                        return (
+                            (classList && classList.contains('fr-marker')) ||
+                            (parentClassList &&
+                                parentClassList.contains('fr-marker'))
+                        );
+                    }
+
+                    getNextOrPreviousTextNode(
+                        textNode,
+                        stopAtNewLine = false,
+                        next = false
+                    ) {
+                        let newLineTags = ['P', 'BR'];
+                        let editorWrapper = this.editor.$wp.get(0);
+                        let currentNode = textNode;
+
+                        // Index update function for traversing backwards or forwards
+                        let getNewIndex = next ? (i) => i + 1 : (i) => i - 1;
+
+                        let newTextNode;
+                        while (
+                            !newTextNode &&
+                            currentNode.parentNode !== editorWrapper
+                        ) {
+                            // Check sibling nodes first
+                            let currentNodeIndex = [
+                                ...currentNode.parentNode.childNodes,
+                            ].indexOf(currentNode);
+                            let newNode = currentNode.parentNode.childNodes.item(
+                                getNewIndex(currentNodeIndex)
+                            );
+
+                            if (!newNode) {
+                                // When at the end/start of sibling nodes, go up to parent node.
+                                currentNode = currentNode.parentNode;
+                            } else {
+                                // Check if we found a text node.
+                                currentNode = newNode;
+                                if (currentNode.nodeType === Node.TEXT_NODE) {
+                                    newTextNode = currentNode;
+                                } else if (
+                                    stopAtNewLine &&
+                                    newLineTags.includes(currentNode.tagName)
+                                ) {
+                                    return;
+                                } else if (currentNode.childNodes.length) {
+                                    // Get text node inside new node
+                                    newTextNode = this.getFirstOrLastTextNode(
+                                        newNode,
+                                        next
+                                    );
+                                }
+                            }
+                        }
+                        return newTextNode;
+                    }
+
+                    getFirstOrLastTextNode(node, first = false) {
+                        let currentNode = node;
+
+                        // Ignore froala markers
+                        if (currentNode && this.isFroalaMarker(currentNode))
+                            return;
+
+                        // Index update function for traversing backwards or forwards
+                        let getNewIndex = first ? (i) => i + 1 : (i) => i - 1;
+
+                        while (
+                            currentNode &&
+                            currentNode.nodeType !== Node.TEXT_NODE
+                        ) {
+                            // Check child nodes all the way down first.
+                            currentNode = first
+                                ? currentNode.firstChild
+                                : currentNode.lastChild;
+                            if (
+                                currentNode &&
+                                this.isFroalaMarker(currentNode)
+                            ) {
+                                // Ignore froala markers
+                                currentNode = null;
+                                break;
+                            }
+                        }
+
+                        if (!currentNode) {
+                            // When no more nodes in the current branch, check sibling nodes.
+                            let i = first ? 0 : node.childNodes.length - 1;
+                            let child = node.childNodes[i];
+                            while (child) {
+                                // Ignore froala markers
+                                if (this.isFroalaMarker(child)) {
+                                    // Move to next or previous sibling
+                                    i = getNewIndex(i);
+                                    child = node.childNodes[i];
+                                    continue;
+                                }
+
+                                // Recursively call itself
+                                let textNode = this.getFirstOrLastTextNode(
+                                    child,
+                                    first
+                                );
+                                if (textNode) return textNode;
+
+                                // Move to next or previous sibling
+                                i = getNewIndex(i);
+                                child = node.childNodes[i];
+                            }
+                        }
+                        return currentNode;
+                    }
+
+                    removeHighlightingFromHtmlString(html) {
+                        if (!html) return html;
+
+                        let $divWithHtml = $(`<div>${html}</div>`);
+                        let highlightedElems = this.getHighlightedElems(
+                            $divWithHtml
+                        );
+                        this.replaceWithContents(highlightedElems);
+                        return $divWithHtml.html();
+                    }
+
+                    removeEmptyHighlightedSpans(e) {
+                        if (e.key === 'Backspace' || e.key === 'Delete') {
+                            let emptyHighlightedElems = this.getHighlightedElems(
+                                this.editor.$el
+                            ).filter(':empty');
+                            this.replaceWithContents(emptyHighlightedElems);
+                        }
+                    }
+
+                    removeInputFromHighlightedSpan() {
+                        let selection = this.editor.selection.get();
+                        let textNode = this.getFirstOrLastTextNode(
+                            selection.anchorNode,
+                            true
+                        );
+                        if (!textNode) return;
+
+                        // Check if the cursor is inside highlighted span, this will return null if not.
+                        let highlightedSpan = this.getHighlightedBracketSpan(
+                            textNode
+                        );
+                        if (!highlightedSpan) return;
+
+                        // Re-highlight the brackets if additional content ends up typed inside.
+                        if (textNode.textContent.length > 1) {
+                            this.removeCurrentHighlighting();
+                            this.highlightBrackets();
+                        }
+                    }
+
+                    getHighlightedBracketSpan(node) {
+                        let nodeElem = this.getNodeElement(node);
+                        return nodeElem.classList.contains(
+                            this.matchingClass
+                        ) || nodeElem.classList.contains(this.nonMatchingClass)
+                            ? nodeElem
+                            : null;
+                    }
+
+                    _init() {
+                        // Listen for 'highlightBrackets' event to allow triggering highlighting from outside.
+                        this.editor.events.on('highlightBrackets', () =>
+                            this.highlightBrackets()
+                        );
+                        // Catch cursor position changes and  highlight brackets if needed.
+                        this.editor.events.on('click', () =>
+                            this.highlightBrackets()
+                        );
+                        this.editor.events.on('keyup', (e) => {
+                            // Highlighted brackets removed with keyboard's backspace or delete keys,
+                            // leave their wrapper span in the DOM,
+                            // we need to remove those to ensure correct behaviour of re-highlighting.
+                            this.removeEmptyHighlightedSpans(e);
+                            this.highlightBrackets();
+                        });
+                        this.editor.events.on('html.set', () =>
+                            this.highlightBrackets()
+                        );
+                        // Catch html.get requests to strip out any highlighting from the model.
+                        this.editor.events.on('html.get', (html) =>
+                            this.removeHighlightingFromHtmlString(html)
+                        );
+                        // Catch content changes and prevent input inside highlighted brackets
+                        this.editor.events.on('input', () =>
+                            this.removeInputFromHighlightedSpan()
+                        );
+                    }
+                };
+
                 var tribute = new Tribute({
                     trigger: '[[',
                     values: [
