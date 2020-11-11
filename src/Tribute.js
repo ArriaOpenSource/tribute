@@ -485,7 +485,41 @@ class Tribute {
     if (typeof index !== "number" || isNaN(index)) return;
     let item = this.current.filteredItems[index];
     let content = this.current.collection.selectTemplate(item);
-    if (content !== null) this.replaceText(content, originalEvent, item);
+    if (content !== null) {
+      if (
+        $(this.current.element)
+            .html()
+            .includes(
+                ' [<span class="atl-non-matching-bracket">[</span>'
+            )
+    ) {
+        let sel, range;
+        if (window.getSelection) {
+          sel = window.getSelection();
+          if (sel.getRangeAt && sel.rangeCount) {
+            range = sel.getRangeAt(0);
+            range.deleteContents();
+            const node = document.createTextNode(
+                content.substr(2, content.length)
+            );
+            range.insertNode(node);
+            
+            // Preserve the selection
+            if (node) {
+                range = range.cloneRange();
+                range.setStartAfter(node);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+          }
+      }
+
+        return;
+      }
+
+      this.replaceText(content, originalEvent, item);
+    }
   }
 
   replaceText(content, originalEvent, item) {
