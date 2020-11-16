@@ -28,7 +28,7 @@ export type TributeCollection<T extends {}> = {
   // class added in the flyout menu for active item
   containerClass?: string;
 
-  itemClass?: string;
+  itemClass?: (item: TributeItem<T>) => string;
 
   // function called on select that returns the content to insert
   selectTemplate?: (item: TributeItem<T>) => string;
