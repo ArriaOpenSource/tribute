@@ -11,7 +11,7 @@ class Tribute {
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
-    itemClass = null,
+    itemClass = "",
     trigger = "@",
     autocompleteMode = false,
     autocompleteSeparator = null,
@@ -65,7 +65,7 @@ class Tribute {
           containerClass: containerClass,
 
           // class applied to each item
-          itemClass: (itemClass || Tribute.defaultItemClass).bind(this),
+          itemClass: itemClass,
 
           // function called on select that retuns the content to insert
           selectTemplate: (
@@ -127,7 +127,7 @@ class Tribute {
           iframe: item.iframe || iframe,
           selectClass: item.selectClass || selectClass,
           containerClass: item.containerClass || containerClass,
-          itemClass: (item.itemClass || Tribute.defaultItemClass).bind(this),
+          itemClass: item.itemClass || itemClass,
           selectTemplate: (
             item.selectTemplate || Tribute.defaultSelectTemplate
           ).bind(this),
@@ -201,10 +201,6 @@ class Tribute {
       this.current.collection.trigger +
       item.original[this.current.collection.fillAttr]
     );
-  }
-
-  static defaultItemClass(_item) {
-    return '';
   }
 
   static defaultMenuItemTemplate(matchItem) {
@@ -329,14 +325,7 @@ class Tribute {
         items = items.slice(0, this.current.collection.menuItemLimit);
       }
 
-      // Order by functions firstly then variables
-      this.current.filteredItems = items.sort((a, b) =>
-          a.original.type > b.original.type
-              ? 1
-              : b.original.type > a.original.type
-              ? -1
-              : 0
-      );
+      this.current.filteredItems = items;
 
       let ul = this.menu.querySelector("ul");
 
@@ -368,7 +357,7 @@ class Tribute {
       items.forEach((item, index) => {
         let li = this.range.getDocument().createElement("li");
         li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass(item);
+        li.className = this.current.collection.itemClass;
         li.addEventListener("mousemove", e => {
           let [li, index] = this._findLiTarget(e.target);
           if (e.movementY !== 0) {
@@ -485,41 +474,7 @@ class Tribute {
     if (typeof index !== "number" || isNaN(index)) return;
     let item = this.current.filteredItems[index];
     let content = this.current.collection.selectTemplate(item);
-    if (content !== null) {
-      if (
-        $(this.current.element)
-            .html()
-            .includes(
-                ' [<span class="atl-non-matching-bracket">[</span>'
-            )
-    ) {
-        let sel, range;
-        if (window.getSelection) {
-          sel = window.getSelection();
-          if (sel.getRangeAt && sel.rangeCount) {
-            range = sel.getRangeAt(0);
-            range.deleteContents();
-            const node = document.createTextNode(
-                content.substr(2, content.length)
-            );
-            range.insertNode(node);
-            
-            // Preserve the selection
-            if (node) {
-                range = range.cloneRange();
-                range.setStartAfter(node);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-          }
-      }
-
-        return;
-      }
-
-      this.replaceText(content, originalEvent, item);
-    }
+    if (content !== null) this.replaceText(content, originalEvent, item);
   }
 
   replaceText(content, originalEvent, item) {

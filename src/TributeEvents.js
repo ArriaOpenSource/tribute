@@ -88,8 +88,7 @@ class TributeEvents {
       while (li.nodeName.toLowerCase() !== "li") {
         li = li.parentNode;
         if (!li || li === tribute.menu) {
-          console.error("cannot find the <li> container for the click");
-          return;
+          throw new Error("cannot find the <li> container for the click");
         }
       }
       tribute.selectItemAtIndex(li.getAttribute("data-index"), event);

@@ -132,7 +132,7 @@ describe("Tribute @mentions cases", function() {
 
         let collectionObject = {
           trigger: trigger,
-          itemClass: (_item) => "mention-list-item",
+          itemClass: "mention-list-item",
           selectClass: "mention-selected",
           values: [
             {

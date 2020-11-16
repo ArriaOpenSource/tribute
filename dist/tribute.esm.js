@@ -84,15 +84,15 @@ class TributeEvents {
     element.boundKeyup = this.keyup.bind(element, this);
     element.boundInput = this.input.bind(element, this);
 
-    element.addEventListener("keydown", element.boundKeydown, true);
-    element.addEventListener("keyup", element.boundKeyup, true);
-    element.addEventListener("input", element.boundInput, true);
+    element.addEventListener("keydown", element.boundKeydown, false);
+    element.addEventListener("keyup", element.boundKeyup, false);
+    element.addEventListener("input", element.boundInput, false);
   }
 
   unbind(element) {
-    element.removeEventListener("keydown", element.boundKeydown, true);
-    element.removeEventListener("keyup", element.boundKeyup, true);
-    element.removeEventListener("input", element.boundInput, true);
+    element.removeEventListener("keydown", element.boundKeydown, false);
+    element.removeEventListener("keyup", element.boundKeyup, false);
+    element.removeEventListener("input", element.boundInput, false);
 
     delete element.boundKeydown;
     delete element.boundKeyup;
@@ -130,8 +130,7 @@ class TributeEvents {
       while (li.nodeName.toLowerCase() !== "li") {
         li = li.parentNode;
         if (!li || li === tribute.menu) {
-          console.error("cannot find the <li> container for the click");
-          return;
+          throw new Error("cannot find the <li> container for the click");
         }
       }
       tribute.selectItemAtIndex(li.getAttribute("data-index"), event);
@@ -508,14 +507,7 @@ class TributeRange {
                 return
             }
 
-            const atlNonMatchingBracket = 'atl-non-matching-bracket';
-            if ($(`.${atlNonMatchingBracket}`).length > 0) {
-                let {top, left} = $(`.${atlNonMatchingBracket}`).offset();
-                top = Math.ceil(top) + 17;
-                left = Math.ceil(left) - 5;
-                coordinates = {top, left};
-            }
-            else if (!this.isContentEditable(context.element)) {
+            if (!this.isContentEditable(context.element)) {
                 coordinates = this.getTextAreaOrInputUnderlinePosition(this.tribute.current.element,
                     info.mentionPosition);
             }
@@ -784,16 +776,6 @@ class TributeRange {
 
         let effectiveRange = this.getTextPrecedingCurrentSelection();
         let lastWordOfEffectiveRange = this.getLastWordInText(effectiveRange);
-
-        if (
-            $(ctx.element)
-                .html()
-                .includes(' [<span class="atl-non-matching-bracket">[</span>')
-        ) {
-            // ATL bracket HTML interferes with matching the trigger
-            effectiveRange = this.tribute.collection[0].trigger;
-            lastWordOfEffectiveRange = this.tribute.collection[0].trigger;
-        }
 
         if (isAutocomplete) {
             return {
@@ -1181,7 +1163,7 @@ class TributeSearch {
         let len = string.length,
             pre = opts.pre || '',
             post = opts.post || '',
-            compareString = opts.caseSensitive && string || string.toLowerCase();
+            compareString = opts.caseSensitive && string || string.toLowerCase();
 
         if (opts.skip) {
             return {rendered: string, score: 0}
@@ -1317,7 +1299,7 @@ class Tribute {
     iframe = null,
     selectClass = "highlight",
     containerClass = "tribute-container",
-    itemClass = null,
+    itemClass = "",
     trigger = "@",
     autocompleteMode = false,
     autocompleteSeparator = null,
@@ -1371,7 +1353,7 @@ class Tribute {
           containerClass: containerClass,
 
           // class applied to each item
-          itemClass: (itemClass || Tribute.defaultItemClass).bind(this),
+          itemClass: itemClass,
 
           // function called on select that retuns the content to insert
           selectTemplate: (
@@ -1433,7 +1415,7 @@ class Tribute {
           iframe: item.iframe || iframe,
           selectClass: item.selectClass || selectClass,
           containerClass: item.containerClass || containerClass,
-          itemClass: (item.itemClass || Tribute.defaultItemClass).bind(this),
+          itemClass: item.itemClass || itemClass,
           selectTemplate: (
             item.selectTemplate || Tribute.defaultSelectTemplate
           ).bind(this),
@@ -1509,10 +1491,6 @@ class Tribute {
     );
   }
 
-  static defaultItemClass(_item) {
-    return '';
-  }
-
   static defaultMenuItemTemplate(matchItem) {
     return matchItem.string;
   }
@@ -1564,8 +1542,10 @@ class Tribute {
 
   ensureEditable(element) {
     if (Tribute.inputTypes().indexOf(element.nodeName) === -1) {
-      if (!element.contentEditable) {
-        throw new Error("[Tribute] Cannot bind to " + element.nodeName + ", not contentEditable");
+      if (element.contentEditable) {
+        element.contentEditable = true;
+      } else {
+        throw new Error("[Tribute] Cannot bind to " + element.nodeName);
       }
     }
   }
@@ -1635,14 +1615,7 @@ class Tribute {
         items = items.slice(0, this.current.collection.menuItemLimit);
       }
 
-      // Order by functions firstly then variables
-      this.current.filteredItems = items.sort((a, b) =>
-          a.original.type > b.original.type
-              ? 1
-              : b.original.type > a.original.type
-              ? -1
-              : 0
-      );
+      this.current.filteredItems = items;
 
       let ul = this.menu.querySelector("ul");
 
@@ -1674,7 +1647,7 @@ class Tribute {
       items.forEach((item, index) => {
         let li = this.range.getDocument().createElement("li");
         li.setAttribute("data-index", index);
-        li.className = this.current.collection.itemClass(item);
+        li.className = this.current.collection.itemClass;
         li.addEventListener("mousemove", e => {
           let [li, index] = this._findLiTarget(e.target);
           if (e.movementY !== 0) {
@@ -1791,41 +1764,7 @@ class Tribute {
     if (typeof index !== "number" || isNaN(index)) return;
     let item = this.current.filteredItems[index];
     let content = this.current.collection.selectTemplate(item);
-    if (content !== null) {
-      if (
-        $(this.current.element)
-            .html()
-            .includes(
-                ' [<span class="atl-non-matching-bracket">[</span>'
-            )
-    ) {
-        let sel, range;
-        if (window.getSelection) {
-          sel = window.getSelection();
-          if (sel.getRangeAt && sel.rangeCount) {
-            range = sel.getRangeAt(0);
-            range.deleteContents();
-            const node = document.createTextNode(
-                content.substr(2, content.length)
-            );
-            range.insertNode(node);
-            
-            // Preserve the selection
-            if (node) {
-                range = range.cloneRange();
-                range.setStartAfter(node);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-          }
-      }
-
-        return;
-      }
-
-      this.replaceText(content, originalEvent, item);
-    }
+    if (content !== null) this.replaceText(content, originalEvent, item);
   }
 
   replaceText(content, originalEvent, item) {

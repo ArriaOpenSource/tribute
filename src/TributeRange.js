@@ -33,14 +33,7 @@ class TributeRange {
                 return
             }
 
-            const atlNonMatchingBracket = 'atl-non-matching-bracket';
-            if ($(`.${atlNonMatchingBracket}`).length > 0) {
-                let {top, left} = $(`.${atlNonMatchingBracket}`).offset();
-                top = Math.ceil(top) + 17;
-                left = Math.ceil(left) - 5;
-                coordinates = {top, left};
-            }
-            else if (!this.isContentEditable(context.element)) {
+            if (!this.isContentEditable(context.element)) {
                 coordinates = this.getTextAreaOrInputUnderlinePosition(this.tribute.current.element,
                     info.mentionPosition)
             }
@@ -309,16 +302,6 @@ class TributeRange {
 
         let effectiveRange = this.getTextPrecedingCurrentSelection()
         let lastWordOfEffectiveRange = this.getLastWordInText(effectiveRange)
-
-        if (
-            $(ctx.element)
-                .html()
-                .includes(' [<span class="atl-non-matching-bracket">[</span>')
-        ) {
-            // ATL bracket HTML interferes with matching the trigger
-            effectiveRange = this.tribute.collection[0].trigger;
-            lastWordOfEffectiveRange = this.tribute.collection[0].trigger;
-        }
 
         if (isAutocomplete) {
             return {

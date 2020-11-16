@@ -142,9 +142,7 @@ Collection object shown with defaults:
   containerClass: 'tribute-container',
 
   // class added to each list item
-  itemClass: function (_item) {
-    return 'test-class';
-  },
+  itemClass: '',
 
   // function called on select that returns the content to insert
   selectTemplate: function (item) {
